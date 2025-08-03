@@ -13,7 +13,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // FIR filter operations
   designFIRFilter: (trfData, config) => ipcRenderer.invoke('design-fir-filter', trfData, config),
-  exportCoefficients: (coefficients, format) => ipcRenderer.invoke('export-coefficients', coefficients, format),
+  exportCoefficients: (coefficients, format, sampleRate) => ipcRenderer.invoke('export-coefficients', coefficients, format, sampleRate),
   
   // Event listeners
   onError: (callback) => {

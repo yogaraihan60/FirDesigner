@@ -15,21 +15,15 @@
       <p v-if="testResult" class="test-result">{{ testResult }}</p>
     </div>
     
-    <div class="control-panel">
-      <h1>FIR Designer</h1>
+    <!-- Main Application -->
+    <div class="main-application">
+      <div class="app-header">
+        <h1>FIR Designer</h1>
+        <div class="app-logo">FIRd</div>
+      </div>
       
-      <!-- File Import Section -->
-      <FileImporter />
-      
-      <!-- Filter Configuration Section -->
-      <FilterDesign v-if="store.trfData" />
-      
-      <!-- Export Section -->
-      <ExportPanel v-if="store.coefficients.length > 0" />
-    </div>
-    
-    <div class="visualization-panel">
-      <Visualization />
+      <!-- Tabbed Interface -->
+      <TabbedInterface />
     </div>
   </div>
 </template>
@@ -37,10 +31,7 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useFilterStore } from './stores/filterStore'
-import FileImporter from './components/FileImporter.vue'
-import FilterDesign from './components/FilterDesign.vue'
-import Visualization from './components/Visualization.vue'
-import ExportPanel from './components/ExportPanel.vue'
+import TabbedInterface from './components/TabbedInterface.vue'
 import EventHub from './utils/eventHub'
 
 const store = useFilterStore()
@@ -83,31 +74,162 @@ const loadDemoData = async () => {
     const fs = await import('fs/promises')
     const buffer = await fs.readFile('./sample.trf')
     
-    // Parse the TRF data
-    const { parseTRF } = await import('./utils/trfParser.js')
+    // Parse the TRF data with 22kHz cutoff
+    const { parseTRF, apply22kHzCutoff, detectOptimalSampleRate } = await import('./utils/trfParser.js')
     const dataPoints = parseTRF(buffer)
+    
+    // Apply additional 22kHz cutoff as safety measure
+    const filteredPoints = apply22kHzCutoff(dataPoints)
+    
+    if (filteredPoints.length === 0) {
+      throw new Error('No valid data points found after 22kHz cutoff')
+    }
     
     // Create demo data structure
     const demoData = {
       fileName: 'sample.trf',
       filePath: './sample.trf',
-      dataPoints,
-      sampleRate: 48000,
-      pointCount: dataPoints.length,
+      dataPoints: filteredPoints,
+      sampleRate: detectOptimalSampleRate(filteredPoints),
+      pointCount: filteredPoints.length,
       frequencyRange: {
-        min: Math.min(...dataPoints.map(p => p.frequency)),
-        max: Math.max(...dataPoints.map(p => p.frequency))
+        min: Math.min(...filteredPoints.map(p => p.frequency)),
+        max: Math.max(...filteredPoints.map(p => p.frequency))
       }
     }
     
     // Update store
     store.trfData = demoData
     store.status = 'ready'
-    testResult.value = `✅ Loaded demo data: ${dataPoints.length} points`
+    testResult.value = `✅ Loaded demo data: ${filteredPoints.length} points (max freq: ${Math.max(...filteredPoints.map(p => p.frequency))} Hz)`
     console.log('✅ Demo data loaded successfully:', demoData)
   } catch (error) {
     testResult.value = `Error loading demo: ${error.message}`
     console.error('❌ Demo data loading failed:', error)
   }
 }
-</script> 
+</script>
+
+<style scoped>
+.app-container {
+  min-height: 100vh;
+  background: #0a0a0a;
+  color: white;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dev-mode-warning,
+.electron-mode-indicator {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 0.9em;
+}
+
+.dev-mode-warning {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid #ffc107;
+  color: #ffc107;
+}
+
+.electron-mode-indicator {
+  background: rgba(40, 167, 69, 0.1);
+  border: 1px solid #28a745;
+  color: #28a745;
+}
+
+.demo-section {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(100, 108, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid #444;
+}
+
+.test-button,
+.demo-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #646cff;
+  background: #646cff;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: all 0.2s ease;
+}
+
+.test-button:hover,
+.demo-button:hover {
+  background: #535bf2;
+  border-color: #535bf2;
+}
+
+.test-result {
+  margin: 0;
+  font-size: 0.9em;
+  color: #ccc;
+}
+
+.main-application {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #2a2a2a;
+  border-radius: 8px;
+  border: 1px solid #444;
+}
+
+.app-header h1 {
+  margin: 0;
+  color: #646cff;
+  font-size: 1.5em;
+  font-weight: 600;
+}
+
+.app-logo {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #646cff, #535bf2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9em;
+  color: white;
+  border: 2px solid #444;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .app-container {
+    padding: 0.5rem;
+  }
+  
+  .demo-section {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .app-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+}
+</style> 

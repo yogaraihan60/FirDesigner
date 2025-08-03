@@ -13,12 +13,14 @@
           <option value="csv">CSV File (.csv)</option>
           <option value="matlab">MATLAB Script (.m)</option>
           <option value="python">Python Array (.py)</option>
+          <option value="high-res">High Resolution (.txt)</option>
         </select>
       </div>
       
       <div class="export-info">
         <p><strong>Format:</strong> {{ formatDescription }}</p>
         <p><strong>Coefficients:</strong> {{ store.coefficients.length }} values</p>
+        <p v-if="store.trfData"><strong>Sample Rate:</strong> {{ store.trfData.sampleRate }} Hz</p>
       </div>
       
       <div class="export-actions">
@@ -68,7 +70,8 @@ const formatDescription = computed(() => {
     text: 'Plain text, one coefficient per line',
     csv: 'Comma-separated values',
     matlab: 'MATLAB array assignment',
-    python: 'Python list assignment'
+    python: 'Python list assignment',
+    'high-res': 'High resolution with index and sample rate header'
   }
   return descriptions[selectedFormat.value]
 })
@@ -77,6 +80,7 @@ const coefficientPreview = computed(() => {
   if (!store.coefficients.length) return ''
   
   const preview = store.coefficients.slice(0, 10)
+  const sampleRate = store.trfData?.sampleRate || 48000
   
   switch (selectedFormat.value) {
     case 'text':
@@ -87,6 +91,18 @@ const coefficientPreview = computed(() => {
       return `coefficients = [${preview.map(c => c.toFixed(6)).join(', ')}];`
     case 'python':
       return `coefficients = [${preview.map(c => c.toFixed(6)).join(', ')}]`
+    case 'high-res':
+      const fsK = (sampleRate / 1000).toFixed(4)
+      return `/* Fs(Hz)=   ${fsK}K */\n/* Coef Line Format= Index & Coef */\n` + 
+             preview.map((c, index) => {
+               const formatted = c.toFixed(15);
+               const parts = formatted.split('.');
+               if (parts.length === 2 && parts[1].length < 15) {
+                 const padded = parts[1].padEnd(15, '0');
+                 return `${index}, ${parts[0]}.${padded}`;
+               }
+               return `${index}, ${formatted}`;
+             }).join('\n')
     default:
       return preview.map(c => c.toFixed(6)).join('\n')
   }
@@ -103,9 +119,13 @@ const exportCoefficients = async () => {
       return isFinite(value) ? value : 0
     })
     
+    // Get sample rate from TRF data or use default
+    const sampleRate = store.trfData?.sampleRate || 48000
+    
     const result = await window.electronAPI.exportCoefficients(
       serializableCoefficients,
-      selectedFormat.value
+      selectedFormat.value,
+      sampleRate
     )
     
     if (result) {
@@ -136,6 +156,7 @@ const exportCoefficients = async () => {
 const copyToClipboard = async () => {
   try {
     let content = ''
+    const sampleRate = store.trfData?.sampleRate || 48000
     
     switch (selectedFormat.value) {
       case 'text':
@@ -149,6 +170,19 @@ const copyToClipboard = async () => {
         break
       case 'python':
         content = `# FIR Filter Coefficients\ncoefficients = [${store.coefficients.map(c => c.toFixed(6)).join(', ')}]`
+        break
+      case 'high-res':
+        const fsK = (sampleRate / 1000).toFixed(4)
+        content = `/* Fs(Hz)=   ${fsK}K */\n/* Coef Line Format= Index & Coef */\n`
+        content += store.coefficients.map((c, index) => {
+          const formatted = c.toFixed(15);
+          const parts = formatted.split('.');
+          if (parts.length === 2 && parts[1].length < 15) {
+            const padded = parts[1].padEnd(15, '0');
+            return `${index}, ${parts[0]}.${padded}`;
+          }
+          return `${index}, ${formatted}`;
+        }).join('\n')
         break
     }
     

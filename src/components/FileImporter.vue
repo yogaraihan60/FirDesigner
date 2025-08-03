@@ -216,13 +216,15 @@ const processPastedData = async () => {
             const magnitude = parseFloat(values[1])
             const phase = parseFloat(values[2])
             
-            if (!isNaN(frequency) && !isNaN(magnitude) && !isNaN(phase)) {
+            // Apply 22kHz cutoff and validate data
+            if (!isNaN(frequency) && !isNaN(magnitude) && !isNaN(phase) && 
+                frequency >= 0 && frequency <= 22000) { // Apply 22kHz cutoff
               const point = { frequency, magnitude, phase }
               
               // Add coherence if present
               if (hasCoherence && values.length >= 4) {
                 const coherence = parseFloat(values[3])
-                if (!isNaN(coherence)) {
+                if (!isNaN(coherence) && coherence >= 0 && coherence <= 1) {
                   point.coherence = coherence
                 }
               }

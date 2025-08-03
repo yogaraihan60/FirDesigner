@@ -12,14 +12,28 @@ class FIRProcessor extends EventEmitter {
       numTaps: 512,
       sampleRate: 48000,
       passbandRipple: 0.1,
-      stopbandAttenuation: 80
+      stopbandAttenuation: 80,
+      frequencyRange: {
+        enabled: false,
+        min: 20,
+        max: 22000,
+        preset: 'human-hearing'
+      }
     };
     
     const config = { ...defaults, ...options };
     
     try {
+      // Apply frequency range filtering if enabled
+      let processedData = trfData;
+      if (config.frequencyRange && config.frequencyRange.enabled) {
+        processedData = this.applyFrequencyRangeFilter(trfData, config.frequencyRange);
+        console.log(`Applied frequency range filter: ${config.frequencyRange.min}-${config.frequencyRange.max} Hz`);
+        console.log(`Data points: ${trfData.length} → ${processedData.length}`);
+      }
+      
       // Convert TRF data to frequency response
-      const freqResponse = this.convertTRFToResponse(trfData, config.sampleRate);
+      const freqResponse = this.convertTRFToResponse(processedData, config.sampleRate);
       
       // Design filter using simple window method (placeholder for fir-filter-design)
       const coefficients = this.designFIRFilter(freqResponse, config);
@@ -36,13 +50,34 @@ class FIRProcessor extends EventEmitter {
           method: config.method,
           filterType: config.filterType || 'lowpass',
           cutoffFrequency: config.cutoffFrequency || 0.1,
-          windowType: config.windowType || 'hamming'
+          windowType: config.windowType || 'hamming',
+          frequencyRange: config.frequencyRange,
+          originalDataPoints: trfData.length,
+          filteredDataPoints: processedData.length
         }
       };
     } catch (err) {
       this.emit('error', 'FILTER_DESIGN_ERROR', err);
       throw err;
     }
+  }
+
+  applyFrequencyRangeFilter(trfData, frequencyRange) {
+    const { min, max } = frequencyRange;
+    
+    // Filter data points within the specified frequency range
+    const filteredData = trfData.filter(point => {
+      return point.frequency >= min && point.frequency <= max;
+    });
+    
+    if (filteredData.length === 0) {
+      throw new Error(`No data points found in frequency range ${min}-${max} Hz`);
+    }
+    
+    // Sort by frequency for consistent processing
+    filteredData.sort((a, b) => a.frequency - b.frequency);
+    
+    return filteredData;
   }
 
   convertTRFToResponse(trfData, sampleRate) {
@@ -119,7 +154,7 @@ class FIRProcessor extends EventEmitter {
     return response;
   }
   
-  async exportCoefficients(coefficients, format, filePath) {
+  async exportCoefficients(coefficients, format, filePath, sampleRate = 48000) {
     try {
       // Ensure coefficients are valid numbers
       const validCoefficients = coefficients.map(c => {
@@ -141,6 +176,22 @@ class FIRProcessor extends EventEmitter {
           break;
         case 'python':
           content = `# FIR Filter Coefficients\ncoefficients = [${validCoefficients.map(c => c.toFixed(6)).join(', ')}]`;
+          break;
+        case 'high-res':
+          // Format: /* Fs(Hz)=   48.0000K */ /* Coef Line Format= Index & Coef */
+          const fsK = (sampleRate / 1000).toFixed(4);
+          content = `/* Fs(Hz)=   ${fsK}K */\n/* Coef Line Format= Index & Coef */\n`;
+          content += validCoefficients.map((c, index) => {
+            // Use a more precise formatting approach
+            const formatted = c.toFixed(15);
+            // Ensure we get exactly 15 decimal places
+            const parts = formatted.split('.');
+            if (parts.length === 2 && parts[1].length < 15) {
+              const padded = parts[1].padEnd(15, '0');
+              return `${index}, ${parts[0]}.${padded}`;
+            }
+            return `${index}, ${formatted}`;
+          }).join('\n');
           break;
         default:
           content = validCoefficients.map(c => c.toFixed(6)).join('\n');

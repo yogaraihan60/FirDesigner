@@ -118,6 +118,94 @@
           step="1"
         />
       </div>
+      
+      <!-- Frequency Range Configuration -->
+      <div class="config-section">
+        <h4>🎵 Frequency Range</h4>
+        
+        <!-- Enable/Disable Frequency Range -->
+        <div class="config-group">
+          <label class="checkbox-label">
+            <input 
+              type="checkbox" 
+              v-model="localConfig.frequencyRange.enabled"
+              @change="updateFrequencyRange"
+            />
+            Enable Frequency Range Filtering
+          </label>
+          <small>Filter TRF data to specific frequency range before processing</small>
+        </div>
+        
+        <!-- Frequency Range Presets -->
+        <div class="config-group" v-if="localConfig.frequencyRange.enabled">
+          <label for="frequencyPreset">Preset:</label>
+          <select 
+            id="frequencyPreset" 
+            v-model="localConfig.frequencyRange.preset"
+            @change="updateFrequencyPreset"
+          >
+            <option value="human-hearing">🎧 Human Hearing (20-22kHz)</option>
+            <option value="full-spectrum">🌊 Full Spectrum (0-100kHz)</option>
+            <option value="speech">🗣️ Speech (300-3.4kHz)</option>
+            <option value="music">🎼 Music (20-20kHz)</option>
+            <option value="sub-bass">🔊 Sub Bass (20-60Hz)</option>
+            <option value="bass">🎸 Bass (60-250Hz)</option>
+            <option value="low-mid">🎹 Low Mid (250-500Hz)</option>
+            <option value="mid">🎤 Mid (500-2kHz)</option>
+            <option value="high-mid">🎺 High Mid (2-4kHz)</option>
+            <option value="presence">✨ Presence (4-6kHz)</option>
+            <option value="brilliance">💎 Brilliance (6-20kHz)</option>
+            <option value="custom">⚙️ Custom</option>
+          </select>
+        </div>
+        
+        <!-- Custom Frequency Range Inputs -->
+        <div class="frequency-range-inputs" v-if="localConfig.frequencyRange.enabled">
+          <div class="range-inputs">
+            <div class="config-group">
+              <label for="freqMin">Min Frequency (Hz):</label>
+              <input 
+                id="freqMin" 
+                type="number" 
+                v-model.number="localConfig.frequencyRange.min"
+                @input="updateFrequencyRange"
+                min="0" 
+                max="1000000"
+                step="1"
+              />
+            </div>
+            
+            <div class="config-group">
+              <label for="freqMax">Max Frequency (Hz):</label>
+              <input 
+                id="freqMax" 
+                type="number" 
+                v-model.number="localConfig.frequencyRange.max"
+                @input="updateFrequencyRange"
+                min="0" 
+                max="1000000"
+                step="1"
+              />
+            </div>
+          </div>
+          
+          <!-- Frequency Range Info -->
+          <div class="frequency-info" v-if="store.hasTRFData">
+            <div class="info-item">
+              <span class="info-label">Original Data:</span>
+              <span class="info-value">{{ originalDataPoints }} points</span>
+            </div>
+            <div class="info-item" v-if="localConfig.frequencyRange.enabled">
+              <span class="info-label">Filtered Data:</span>
+              <span class="info-value">{{ filteredDataPoints }} points</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Range:</span>
+              <span class="info-value">{{ localConfig.frequencyRange.min }} - {{ localConfig.frequencyRange.max }} Hz</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     
     <!-- Design Button -->
@@ -145,7 +233,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, computed } from 'vue'
 import { useFilterStore } from '@/stores/filterStore'
 
 const store = useFilterStore()
@@ -159,7 +247,22 @@ const localConfig = reactive({
   cutoffFrequency: store.filterConfig.cutoffFrequency,
   windowType: store.filterConfig.windowType,
   passbandRipple: store.filterConfig.passbandRipple,
-  stopbandAttenuation: store.filterConfig.stopbandAttenuation
+  stopbandAttenuation: store.filterConfig.stopbandAttenuation,
+  frequencyRange: {
+    enabled: store.filterConfig.frequencyRange.enabled,
+    min: store.filterConfig.frequencyRange.min,
+    max: store.filterConfig.frequencyRange.max,
+    preset: store.filterConfig.frequencyRange.preset
+  }
+})
+
+// Computed properties for data point counts
+const originalDataPoints = computed(() => {
+  return store.trfData ? store.trfData.dataPoints.length : 0
+})
+
+const filteredDataPoints = computed(() => {
+  return store.filteredTRFData ? store.filteredTRFData.dataPoints.length : 0
 })
 
 // Sync with store changes
@@ -178,6 +281,19 @@ const updateConfig = () => {
     passbandRipple: localConfig.passbandRipple,
     stopbandAttenuation: localConfig.stopbandAttenuation
   })
+}
+
+const updateFrequencyRange = () => {
+  store.updateFrequencyRange({
+    enabled: localConfig.frequencyRange.enabled,
+    min: localConfig.frequencyRange.min,
+    max: localConfig.frequencyRange.max,
+    preset: localConfig.frequencyRange.preset
+  })
+}
+
+const updateFrequencyPreset = () => {
+  store.setFrequencyRangePreset(localConfig.frequencyRange.preset)
 }
 
 const designFilter = async () => {
@@ -202,6 +318,19 @@ const designFilter = async () => {
   gap: 1rem;
 }
 
+.config-section {
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 1rem;
+  background: rgba(100, 108, 255, 0.05);
+}
+
+.config-section h4 {
+  margin: 0 0 1rem 0;
+  color: #646cff;
+  font-size: 1.1em;
+}
+
 .config-group {
   display: flex;
   flex-direction: column;
@@ -212,6 +341,18 @@ const designFilter = async () => {
   font-size: 0.9em;
   font-weight: 500;
   color: #646cff;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: auto;
+  margin: 0;
 }
 
 .config-group input,
@@ -234,6 +375,46 @@ const designFilter = async () => {
   font-size: 0.8em;
   opacity: 0.7;
   margin-top: 0.25rem;
+}
+
+.frequency-range-inputs {
+  margin-top: 1rem;
+}
+
+.range-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.frequency-info {
+  background: rgba(100, 108, 255, 0.1);
+  border-radius: 4px;
+  padding: 0.75rem;
+  border-left: 3px solid #646cff;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.info-item:last-child {
+  margin-bottom: 0;
+}
+
+.info-label {
+  font-size: 0.85em;
+  color: #888;
+}
+
+.info-value {
+  font-size: 0.85em;
+  font-weight: 500;
+  color: #646cff;
 }
 
 .design-actions {
@@ -263,5 +444,23 @@ const designFilter = async () => {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+.status {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.status.loading {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  color: #ffc107;
+}
+
+.status.success {
+  background: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.3);
+  color: #28a745;
 }
 </style> 
