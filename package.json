@@ -1,0 +1,40 @@
+{
+  "name": "fir-designer",
+  "version": "1.0.0",
+  "description": "FIR Filter Designer with TRF file support",
+  "type": "commonjs",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron": "electron .",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 http://localhost:3001 http://localhost:3002 http://localhost:3003 && NODE_ENV=development electron .\"",
+    "electron:build": "npm run build && electron-builder",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "vue": "^3.3.4",
+    "pinia": "^2.1.6",
+    "electron": "^25.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.2.3",
+    "vite": "^4.4.5",
+    "concurrently": "^8.2.0",
+    "wait-on": "^7.0.1",
+    "electron-builder": "^24.6.4",
+    "vitest": "^0.34.1"
+  },
+  "build": {
+    "appId": "com.firdesigner.app",
+    "productName": "FIR Designer",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ]
+  }
+} 
