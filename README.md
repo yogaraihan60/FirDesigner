@@ -1,178 +1,243 @@
-# FIR Designer
+# FIR Designer 🎛️
 
-A modern Electron-based application for designing Finite Impulse Response (FIR) filters from TRF (Transfer Response Function) files.
+A professional FIR (Finite Impulse Response) filter design tool built with Electron, Vue 3, and Vite. This application provides comprehensive tools for analyzing TRF (Transfer Response Function) files and designing high-quality FIR filters with real-time visualization.
 
-## Features
+![FIR Designer](https://img.shields.io/badge/Electron-25.0.0-blue)
+![Vue](https://img.shields.io/badge/Vue-3.3.4-green)
+![Vite](https://img.shields.io/badge/Vite-4.4.5-purple)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
-- **TRF File Support**: Import ASCII TRF files with frequency, magnitude, and phase data
-- **Multiple Design Methods**: Least Squares, Window Method, and Parks-McClellan algorithms
-- **Real-time Visualization**: Compare original TRF data with designed filter response
-- **Export Options**: Export coefficients in multiple formats (Text, CSV, MATLAB, Python)
-- **Modern UI**: Clean, responsive interface with drag-and-drop file support
-- **Cross-platform**: Works on Windows, macOS, and Linux
+## ✨ Features
 
-## Installation
+### 📁 File Operations
+- **TRF File Support**: Parse and validate TRF (Transfer Response Function) files
+- **Drag & Drop**: Intuitive file import with drag and drop support
+- **Paste Functionality**: Paste TRF data directly from clipboard
+- **Multiple Formats**: Support for various TRF file formats including TTA DM3 with coherence data
+
+### 🎛️ Filter Design
+- **Multiple Algorithms**: Window method, least squares, and Parks-McClellan algorithms
+- **Configurable Parameters**: Filter length, cutoff frequency, passband ripple, stopband attenuation
+- **Real-time Processing**: Instant filter design with live feedback
+- **Advanced Options**: Multiple window types (Hamming, Hanning, Blackman, Rectangular)
+
+### 📊 Professional Visualization
+- **Bode Plots**: Frequency response with magnitude and phase
+- **Impulse Response**: Time-domain visualization of filter coefficients
+- **Interactive Controls**: Zoom, pan, and toggle display options
+- **Logarithmic Scaling**: Professional frequency scaling (15 Hz - 20 kHz)
+- **Real-time Updates**: Live graph updates as data changes
+
+### 💾 Export Capabilities
+- **Multiple Formats**: Text, CSV, MATLAB, Python
+- **Copy to Clipboard**: Quick coefficient copying
+- **File Export**: Save coefficients to disk
+- **Validation**: Automatic coefficient validation and formatting
+
+### 🖥️ Desktop Application
+- **Cross-platform**: Windows, macOS, and Linux support
+- **Native Performance**: Electron-based desktop application
+- **Modern UI**: Dark theme with professional styling
+- **Responsive Design**: Adapts to different screen sizes
+
+## 🚀 Quick Start
 
 ### Prerequisites
-
-- Node.js (v16 or higher)
+- Node.js 16+ 
 - npm or yarn
 
-### Development Setup
+### Installation
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd fir-designer
-```
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yogaraihan60/firfilter.git
+   cd firfilter
+   ```
 
-2. Install dependencies:
-```bash
-npm install
-```
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-3. Start the development server:
-```bash
-npm run electron:dev
-```
+3. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+4. **Launch Electron app**
+   ```bash
+   npm run electron:dev
+   ```
 
 ### Building for Production
 
 ```bash
+# Build the application
+npm run build
+
+# Build Electron app
 npm run electron:build
 ```
 
-## Usage
+## 📖 Usage
 
-### 1. Import TRF File
+### 1. Import TRF Data
+- **File Import**: Drag and drop TRF files or use the file browser
+- **Paste Data**: Use Ctrl/Cmd + V to paste TRF data from clipboard
+- **Sample Data**: Use the demo data button for testing
 
-- Drag and drop a TRF file onto the application
-- Or click "Browse Files" to select a file
-- Supported format: ASCII text with frequency, magnitude, and phase columns
-
-### 2. Configure Filter Parameters
-
-- **Design Method**: Choose between Least Squares, Window Method, or Parks-McClellan
-- **Number of Taps**: Set the filter length (power of 2 recommended)
-- **Sample Rate**: Specify the sampling frequency
-- **Passband Ripple**: Maximum allowed ripple in the passband (dB)
-- **Stopband Attenuation**: Minimum attenuation in the stopband (dB)
+### 2. Configure Filter
+- **Filter Type**: Choose low-pass, high-pass, band-pass, or band-stop
+- **Parameters**: Set filter length, cutoff frequency, and window type
+- **Advanced Options**: Configure passband ripple and stopband attenuation
 
 ### 3. Design Filter
-
-- Click "Design Filter" to generate the FIR coefficients
-- View the comparison between original TRF and designed filter response
+- Click "Design Filter" to generate coefficients
+- View real-time progress and results
+- Analyze filter performance through visualizations
 
 ### 4. Export Results
+- **Copy to Clipboard**: Quick coefficient copying
+- **File Export**: Save in multiple formats (TXT, CSV, MATLAB, Python)
+- **Visualization**: Export graphs and analysis results
 
-- Choose export format (Text, CSV, MATLAB, Python)
-- Export to file or copy to clipboard
-- Preview the first 10 coefficients before export
+## 🏗️ Architecture
 
-## TRF File Format
+### Frontend (Vue 3)
+- **Composition API**: Modern Vue 3 reactive system
+- **Pinia Store**: State management for application data
+- **Component-based**: Modular, reusable components
+- **TypeScript Ready**: Full TypeScript support available
 
-The application supports ASCII TRF files with the following format:
+### Backend (Electron)
+- **Main Process**: File system operations and heavy computations
+- **Renderer Process**: UI rendering and user interactions
+- **IPC Communication**: Secure inter-process communication
+- **Native APIs**: Access to system-level functionality
+
+### Build System
+- **Vite**: Fast development server and build tool
+- **Electron Builder**: Cross-platform desktop app packaging
+- **Hot Reload**: Instant development feedback
+- **Optimized Builds**: Production-ready optimizations
+
+## 📁 Project Structure
 
 ```
-Frequency (Hz)    Magnitude (dB)    Phase (deg)
-1000.0           -0.5              0.0
-2000.0           -1.2              5.2
-3000.0           -2.1              -3.1
-...
-```
-
-### Requirements
-
-- **Frequency**: Must be in Hz, positive values
-- **Magnitude**: Must be in dB, typically between -200 and 200
-- **Phase**: Must be in degrees, typically between -180 and 180
-- **Headers**: Optional but supported
-- **Separators**: Whitespace, tabs, or commas
-
-## Project Structure
-
-```
-fir-designer/
+firfilter/
 ├── electron/                 # Electron main process
 │   ├── main.js              # Main process entry point
-│   ├── preload.js           # Preload script for security
-│   ├── fileManager.js       # TRF file handling
-│   └── firProcessor.js      # DSP operations
+│   ├── preload.js           # Preload script for IPC
+│   ├── fileManager.js       # File operations
+│   ├── firProcessor.js      # FIR filter algorithms
+│   └── trfParser.js         # TRF file parser
 ├── src/                     # Vue application
 │   ├── components/          # Vue components
-│   │   ├── FileImporter.vue # File import UI
+│   │   ├── FileImporter.vue # File import interface
 │   │   ├── FilterDesign.vue # Filter configuration
-│   │   ├── Visualization.vue # Response visualization
+│   │   ├── Visualization.vue # Graph rendering
 │   │   └── ExportPanel.vue  # Export functionality
-│   ├── stores/              # State management
-│   │   └── filterStore.js   # Pinia store
-│   ├── utils/               # Utilities
-│   │   ├── eventHub.js      # Event management
-│   │   └── trfParser.js     # TRF file parser
-│   ├── App.vue              # Main application component
-│   └── main.js              # Vue entry point
-├── package.json             # Dependencies and scripts
-├── vite.config.js           # Vite configuration
-└── README.md               # This file
+│   ├── stores/              # Pinia stores
+│   │   └── filterStore.js   # Application state
+│   ├── utils/               # Utility functions
+│   └── main.js              # Vue app entry point
+├── scripts/                 # Build and utility scripts
+├── sample.trf              # Sample TRF file for testing
+└── package.json            # Project configuration
 ```
 
-## Development
+## 🔧 Development
 
 ### Available Scripts
 
-- `npm run dev` - Start Vite development server
-- `npm run build` - Build for production
-- `npm run electron:dev` - Start Electron in development mode
-- `npm run electron:build` - Build Electron application
-- `npm run test` - Run tests
+```bash
+# Development
+npm run dev              # Start Vite dev server
+npm run electron:dev     # Start Electron with dev server
+npm run electron:build   # Build Electron app
+npm run build           # Build Vue app for production
+npm run preview         # Preview production build
 
-### Architecture
+# Testing
+npm run test            # Run unit tests
 
-- **Frontend**: Vue 3 with Composition API and Pinia for state management
-- **Backend**: Electron main process with Node.js
-- **Build Tool**: Vite for fast development and optimized builds
-- **Styling**: CSS with modern design system
+# Utilities
+npm run setup-git       # Setup Git repository
+```
 
-### Key Components
+### Development Workflow
 
-1. **TRF Parser**: Robust parsing of ASCII TRF files with header detection
-2. **FIR Processor**: DSP algorithms for filter design and analysis
-3. **File Manager**: Secure file system operations with validation
-4. **Event Hub**: Centralized event management across components
-5. **State Store**: Reactive state management with Pinia
+1. **Start Development Server**
+   ```bash
+   npm run dev
+   ```
 
-## Error Handling
+2. **Launch Electron**
+   ```bash
+   npm run electron:dev
+   ```
 
-The application includes comprehensive error handling:
+3. **Make Changes**
+   - Edit Vue components in `src/components/`
+   - Modify Electron logic in `electron/`
+   - Update styles in `src/style.css`
 
-- **File Validation**: Checks file size, format, and data integrity
-- **Data Validation**: Validates frequency ranges and numeric values
-- **Process Isolation**: Secure communication between main and renderer processes
-- **User Feedback**: Clear error messages and status indicators
+4. **Test Changes**
+   - Hot reload will automatically update the application
+   - Use the sample TRF file for testing
+   - Check console for any errors
 
-## Contributing
+## 📊 TRF File Format
+
+The application supports TRF (Transfer Response Function) files with the following format:
+
+```
+TTA DM3 10-9
+Frequency (Hz)	Magnitude (dB)	Phase (degrees)	Coherence
+1.464844	-20.36	-170.58	0.24
+2.929688	-19.92	-171.24	0.01
+4.394531	-20.22	-174.49	0.02
+...
+```
+
+### Supported Formats
+- **Standard TRF**: Frequency, magnitude, phase
+- **Extended TRF**: Includes coherence data
+- **TTA DM3**: Specialized format with header information
+- **Custom Formats**: Configurable parser for different formats
+
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## License
+### Development Guidelines
+- Follow Vue 3 Composition API patterns
+- Use TypeScript for new features
+- Maintain consistent code formatting
+- Add tests for new functionality
+- Update documentation for API changes
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## 📝 License
 
-## Support
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-For issues and questions:
-- Check the documentation
-- Search existing issues
-- Create a new issue with detailed information
+## 🙏 Acknowledgments
 
-## Roadmap
+- **Vue.js Team**: For the amazing reactive framework
+- **Electron Team**: For cross-platform desktop capabilities
+- **Vite Team**: For the fast build tool
+- **DSP Community**: For FIR filter algorithms and techniques
 
-- [ ] Real-time frequency response plotting
-- [ ] Advanced filter design algorithms
-- [ ] Batch processing of multiple files
-- [ ] Filter performance analysis
-- [ ] Integration with external DSP libraries 
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/yogaraihan60/firfilter/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yogaraihan60/firfilter/discussions)
+- **Email**: Contact through GitHub profile
+
+---
+
+**Made with ❤️ by the FIR Designer Team** 
